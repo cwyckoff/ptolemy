@@ -1,7 +1,8 @@
-= Babel-icious
+= Ptolemy
 
-Are you tired of ugly data munging in Rails controllers or models, for instance.  Well, Babel_icious is a flexible mapping tool for mapping hashes and xml.  It allows you define mappings separate from your code, keeping your code clean and focused on its core responsibilities.  The mappings themselves are then easy to understand and modify if and when your code changes.
+Are you tired of ugly data munging in Rails controllers or models, for instance.  Well, Ptolemy is a flexible mapping tool for mapping hashes and xml.  It allows you define mappings separate from your code, keeping your code clean and focused on its core responsibilities.  The mappings themselves are then easy to understand and modify if and when your code changes.
 
+Ptolemy is a reworking of the Babel-icious mapping gem.  Ultimately, I felt a name change would do the gem some good since the name 'Babel-icious', a play on the Tower of Babel, was often confused with the term 'Babe-alicious'.  Also, the name Ptolemy seemed eminently more suitable for a mapping gem given the impact of the historical figure Ptolemy on the science of geography.
 
 == Author
 
@@ -16,9 +17,9 @@ Add a mapper for JSON.
 == Examples
 
 
-Babel_icious mappings should ideally be written in their own file or files, separate from the code that actually requires mapping.  Just include the mapping files at runtime.  A mapping is configured by passing mapping 'coordinates' to a 'config' block on the Mapper class:
+Ptolemy mappings should ideally be written in their own file or files, separate from the code that actually requires mapping.  Just include the mapping files at runtime.  A mapping is configured by passing mapping 'coordinates' to a 'config' block on the Mapper class:
 
- Babelicious::Mapper.config(:foo) do |m|
+ Ptolemy::Mapper.config(:foo) do |m|
   
   m.direction :from => :xml, :to => :hash
   
@@ -52,7 +53,7 @@ with the value of "bar" from the hash above placed in the nested <foo> tags in t
 
 When you want to translate the mappings, simply call:
 
- Babelicious::Mapper.translate(:foo, source)
+ Ptolemy::Mapper.translate(:foo, source)
 
 passing the tag for the mapping and the actual source you want to translate from.  The above line would translate the :foo mapping above.
 
@@ -74,7 +75,7 @@ will only translate if the value at "foo/bar" begins with a capital "M".
 
 === Customized mappings
 
-Babel_icious provides a few powerful ways of handling customized mappings.
+Ptolemy provides a few powerful ways of handling customized mappings.
 
 ==== .to
 
