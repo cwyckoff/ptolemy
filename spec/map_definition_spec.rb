@@ -10,44 +10,44 @@ module Ptolemy
       MapFactory.stub!(:source).and_return(@source_element = mock("XmlMap", :value_from => "bar"))
       MapFactory.stub!(:target).and_return(@target_element = mock("HashMap", :map_from => {}, :class => @hash_map_klass))
       @map_definition = MapDefinition.new
-      @map_definition.direction = {:from => :xml, :to => :hash}
+      @map_definition.direction({:from => :xml, :to => :hash})
       @opts = {:to => "bar/foo", :from => "foo/bar"}
-      @map_definition.register_rule(@opts)
+      @map_definition.map(@opts)
     end
     
     
-    describe "#register_condition" do 
+    describe "#unless" do 
       
       it "should delegate to target map" do 
         # expect
         @target_element.should_receive(:register_condition).with(:unless, :nil)
         
         # given
-        @map_definition.register_condition(:unless, :nil)
+        @map_definition.unless(:nil)
       end
       
     end
 
-    describe "#register_customized" do 
+    describe "#customize" do 
       
       it "should delegate to target map element" do 
         # expect
         @target_element.should_receive(:register_customized)
         
         # given
-        @map_definition.register_customized
+        @map_definition.customize
       end
       
     end
 
-    describe "#register_from" do 
+    describe "#from" do 
       
       it "should create new source object" do 
         # expect
         MapFactory.should_receive(:source).with({:from => :xml, :to => :hash}, {:from => "foo/bar"})
         
         # given
-        @map_definition.register_from("foo/bar")
+        @map_definition.from("foo/bar")
       end
 
       it "should add source to mappings array" do 
@@ -56,7 +56,7 @@ module Ptolemy
         @map_definition.reset
 
         # when
-        @map_definition.register_from("foo/bar")
+        @map_definition.from("foo/bar")
 
         # expect
         @map_definition.rules.should == [map_rule]
@@ -65,13 +65,13 @@ module Ptolemy
       context "when argument is nil" do 
 
         it "should raise an error" do 
-          running { @map_definition.register_from(nil) }.should raise_error(MapDefinitionError)
+          running { @map_definition.from(nil) }.should raise_error(MapDefinitionError)
         end 
       end 
 
     end
 
-    describe "#register_include" do
+    describe "#include" do
 
       before(:each) do
         Mapper.reset
@@ -80,14 +80,14 @@ module Ptolemy
         @source_element = mock("HashMap", :dup => (@dupd_source = mock("HashMap", :path_translator => @source_path_translator)))
         @target_element = mock("HashMap", :dup => (@dupd_target = mock("HashMap", :path_translator => @target_path_translator)))
         @other_map_rule = mock("MapRule", :source => @source_element, :target => @target_element)
-        @other_map_definition = mock("MapDefinition", :direction= => nil, :register_rule => nil, :rules => [@other_map_rule])
+        @other_map_definition = mock("MapDefinition", :map => nil, :rules => [@other_map_rule])
         Mapper.definitions[:another_mapping] = @other_map_definition
       end
 
       context "missing mapping key" do
 
         it "should raise an error" do
-          running { @map_definition.register_include }.should raise_error(MapDefinitionError)
+          running { @map_definition.include }.should raise_error(MapDefinitionError)
         end
 
       end
@@ -95,7 +95,7 @@ module Ptolemy
       context "missing included mapping" do
 
         it "should raise an error" do
-          running { @map_definition.register_include(:foo) }.should raise_error(MapDefinitionError)
+          running { @map_definition.include(:foo) }.should raise_error(MapDefinitionError)
         end
 
       end
@@ -105,12 +105,12 @@ module Ptolemy
         @other_map_definition.should_receive(:rules)
 
         # when
-        @map_definition.register_include(:another_mapping)
+        @map_definition.include(:another_mapping)
       end
 
       it "should add its own rules to those from included map definition" do
         # when
-        @map_definition.register_include(:another_mapping)
+        @map_definition.include(:another_mapping)
 
         # expect
         @map_definition.rules.last.source.should == @dupd_source
@@ -125,32 +125,32 @@ module Ptolemy
           @dupd_target.path_translator.should_receive(:unshift).with("barf")
 
           # when
-          @map_definition.register_include(:another_mapping, {:inside_of => "barf"})
+          @map_definition.include(:another_mapping, {:inside_of => "barf"})
         end
         
       end
     end
     
 
-    describe "#register_rule" do 
+    describe "#map" do 
 
       def do_process
         @source_element.stub!(:class).and_return(@xml_map_klass = mock("XmlMapKlass", :filter_source => @xml))
         @map_definition.reset
-        @map_definition.direction = {:from => :xml, :to => :hash}
-        @map_definition.register_rule(@opts)
+        @map_definition.direction(:from => :xml, :to => :hash)
+        @map_definition.map(@opts)
       end
       
       it "should register target or source mapping" do 
         # given
         @source_element.stub!(:class).and_return(mock("XmlMapKlass", :filter_source => @xml))
         @map_definition.reset
-        @map_definition.direction = {:from => :xml, :to => :hash}
+        @map_definition.direction(:from => :xml, :to => :hash)
         map_rule = MapRule.new(@source_element, @target_element)
         MapRule.stub!(:new).and_return(map_rule)
 
         # when
-        @map_definition.register_rule(@opts)
+        @map_definition.map(@opts)
 
         # expect
         @map_definition.rules.should == [map_rule]
@@ -162,10 +162,10 @@ module Ptolemy
 
           def do_process
             @map_definition.reset
-            @map_definition.direction = {:from => :xml, :to => :hash}
-            @map_definition.register_rule({:to => "bar/foo", :from => "foo/bar"})
-            @map_definition.register_rule({:to => "bar/baz", :from => "foo/baz"})
-            @map_definition.register_rule({:to => "bar/boo", :from => "foo/boo"})
+            @map_definition.direction(:from => :xml, :to => :hash)
+            @map_definition.map({:to => "bar/foo", :from => "foo/bar"})
+            @map_definition.map({:to => "bar/baz", :from => "foo/baz"})
+            @map_definition.map({:to => "bar/boo", :from => "foo/boo"})
           end
           
           it "should delegate creation of the initial target to the target element" do 
@@ -180,26 +180,26 @@ module Ptolemy
       
       it "should instantiate 'from' mapping element" do 
         during_process { 
-          MapFactory.should_receive(:source).with(@map_definition.direction, @opts).and_return(@source_element)
+          MapFactory.should_receive(:source).with(@map_definition.dir, @opts).and_return(@source_element)
         }
       end
 
       it "should instantiate 'to' mapping element" do 
         during_process { 
-          MapFactory.should_receive(:target).with(@map_definition.direction, @opts).and_return(@target_element)
+          MapFactory.should_receive(:target).with(@map_definition.dir, @opts).and_return(@target_element)
         }
       end
       
       context "when :to or :from are not set" do 
         
         it "should raise an error" do 
-          running { @map_definition.register_rule({})}.should raise_error(MapDefinitionError)
+          running { @map_definition.map({})}.should raise_error(MapDefinitionError)
         end
         
       end
     end
 
-    describe "#register_prepopulate" do 
+    describe "#prepopulate" do 
 
       before(:each) do
         @target_data = 'event/api_version'
@@ -210,32 +210,32 @@ module Ptolemy
         MapFactory.should_receive(:target).with({:from => :xml, :to => :hash}, {:to => @target_data})
         
         # when
-        @map_definition.register_prepopulate(@target_data)
+        @map_definition.prepopulate(@target_data)
       end
 
       it "should add source_proxy to rules array" do
         # when
-        @map_definition.register_prepopulate(@target_data)
+        @map_definition.prepopulate(@target_data)
 
         # expect
         @map_definition.rules.last.source.should be_a_kind_of(SourceProxy)
       end
 
       it "should return a source proxy object" do
-        source = @map_definition.register_prepopulate(@target_data)
+        source = @map_definition.prepopulate(@target_data)
         source.should be_a_kind_of(SourceProxy)
       end
 
     end
 
-    describe "#register_to" do 
+    describe "#to" do 
       
       it "should create new target object" do 
         # expect
         MapFactory.should_receive(:target).with({:from => :xml, :to => :hash}, {:to => '', :to_proc => nil})
         
         # given
-        @map_definition.register_to
+        @map_definition.to
       end
 
       it "should add target to rules array" do 
@@ -243,7 +243,7 @@ module Ptolemy
         map_rule = MapRule.new(@source_element)
         @map_definition.reset
         @map_definition.rules << map_rule
-        @map_definition.register_to
+        @map_definition.to
 
         # expect
         @map_definition.rules.should == [map_rule]
@@ -255,7 +255,7 @@ module Ptolemy
           # given
           @map_definition.reset
 
-          running { @map_definition.register_to }.should raise_error(MapDefinitionError)
+          running { @map_definition.to }.should raise_error(MapDefinitionError)
         end 
       end 
     end
@@ -268,7 +268,7 @@ module Ptolemy
         
         # expect
         @map_definition.rules.should be_empty
-        @map_definition.direction.should be_nil
+        @map_definition.dir.should be_nil
       end
     end
     

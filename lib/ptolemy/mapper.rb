@@ -5,7 +5,7 @@ module Ptolemy
   class Mapper
     
     class << self
-      attr_reader :direction, :current_map_definition_key
+      attr_reader :current_map_definition_key
 
       def [](key)
         definitions[key.to_sym]
@@ -17,17 +17,17 @@ module Ptolemy
         definitions[key.to_sym] ||= DefinitionMapper.new(key)
         definitions[key.to_sym].instance_eval(&block)
       end 
-      
-      def load(str)
-        instance_eval(str.strip)
-      end 
 
       def definitions
         @definitions ||= {}
       end
       
+      def load_str(str)
+        instance_eval(str.strip)
+      end 
+
       def namespace(namespace, &block)
-        namespaces[namespace.to_sym] ||= NamespaceMapper.new(name)
+        namespaces[namespace.to_sym] ||= NamespaceMapper.new(namespace)
         namespaces[namespace.to_sym].instance_eval(&block)
       end 
 
@@ -36,13 +36,19 @@ module Ptolemy
       end
 
       def reset
-        @map_definitions = nil
+        @definitions, @namespaces = nil, nil
       end
 
-      def translate(key=nil, source=nil)
+      def translate(key, source)
         raise MapperError, "No target mapper exists for key #{key}" unless definitions.has_key?(key)
         
         definitions[key].translate(source)
+      end
+
+      def translate_namespace(namespace, key, source)
+        raise MapperError, "No target mapper exists for key #{key}" unless namespaces.has_key?(namespace)
+        
+        namespaces[namespace].translate(key, source)
       end
 
     end
@@ -65,7 +71,7 @@ module Ptolemy
     include Definable
 
     def initialize(name)
-      @name = name
+      @name = name.to_s
     end 
 
     def current_map_definition
@@ -79,17 +85,19 @@ module Ptolemy
     include Definable
 
     def initialize(name)
-      @name = name
+      @name = name.to_s
     end 
 
     def define(key, &block)
       raise MapperError, "A mapping for the key #{key} currently exists.  Are you sure you want to merge the mapping you are about to do with the existing mapping?" if definitions.keys.include?(key)
 
-      @current_map_definition_key = key
+      @current_map_definition_key = key.to_sym
       yield current_map_definition
     end
 
-    private
+    def translate(key, source)
+      definitions[key.to_sym].translate(source)
+    end
 
     def current_map_definition
       definitions[@current_map_definition_key] ||= MapDefinition.new

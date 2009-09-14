@@ -4,189 +4,169 @@ module Ptolemy
 
   describe "Mapper" do
 
-    before(:each) do 
-      MapDefinition.stub!(:new).and_return(@map_definition = mock("MapDefinition", :register_rule => nil, :direction= => nil))
+    before(:each) do
+      Mapper.reset
     end
 
-    describe ".config" do
+    describe ".define" do
+
+      before(:each) do
+        @definition_mapper = mock("DefinitionMapper", :name => "test")
+        DefinitionMapper.stub!(:new).and_return(@definition_mapper)
+      end
       
-      it "should yield instance of itself" do 
-        Mapper.reset
-        Mapper.config(:foo) do |m|
-          m.should == Mapper
-        end
+      it "should register definition" do
+        # when
+        Mapper.define(:foo) { }
+
+        # expect
+        Mapper.definitions.should == {:foo => @definition_mapper}
+      end 
+
+      it "should delegate to DefinitionMapper" do
+        # expect
+        DefinitionMapper.should_receive(:new).with(:foo)
+
+        # when
+        Mapper.define(:foo) { }
       end
 
-      it "should take a mapping key to register the target map" do 
-        # given
-        Mapper.reset
-        Mapper.config(:foo) {}
-        
+      it "should instance eval any block passed to it on the DefinitionMapper object" do
         # expect
-        Mapper.current_map_definition_key.should == :foo
+        @definition_mapper.should_receive(:instance_eval)
+        
+        # when
+        Mapper.define(:foo) { }
       end
       
       describe "when a mapping key already exists" do 
         
         it "should raise an error" do 
           # given
-          Mapper.config(:bar) { |m| m.direction :from => :xml, :to => :hash }
+          Mapper.define(:bar) { }
           
           # expect
-          running { Mapper.config(:bar) {} }.should raise_error(MapperError)
+          running { Mapper.define(:bar) {} }.should raise_error(MapperError, "A mapping for the key bar currently exists.  Are you sure you want to merge the mapping you are about to do with the existing mapping?")
         end
       end
       
     end
 
-    describe ".customize" do 
-      
+    describe ".namespace" do
+
       before(:each) do
-        Mapper.reset
-        Mapper.config(:foo) { |m| m.direction :from => :xml, :to => :hash}
+        @namespace_mapper = mock("NamespaceMapper", :name => "test")
+        NamespaceMapper.stub!(:new).and_return(@namespace_mapper)
       end
       
-      it "should delegate it to target mapper" do 
+      it "should register namespace" do
+        # when
+        Mapper.namespace(:foo) { }
+
         # expect
-        @map_definition.should_receive(:register_customized) #.with(:when, an_instance_of(Proc)).and_return(@when_conditions)
-        
-        # given
-        Mapper.map({:to => "bar/foo", :from => "foo/bar"}).customize do |value|
-          # the value of "bar/foo" is itself a hash {:bar => "a", :cuk => "b"}
-          [{:bum => value[:bar], :coo => value[:cuk]}]
-        end
-      end
-      
-    end
-    
-    describe ".direction" do 
-      
-      it "should set direction of the mapping" do 
-        # expect
-        @map_definition.should_receive(:direction=).with({:from => :xml, :to => :hash})
-
-        # given
-        Mapper.reset
-        Mapper.config(:foo) do |m|
-          m.direction :from => :xml, :to => :hash
-        end
-      end
-      
-    end
-
-    describe ".from" do 
-
-      it "should delegate source path to target mapper" do 
-        # expect
-        @map_definition.should_receive(:register_from).with("foo/bar")
-
-        # given
-        Mapper.reset
-        Mapper.from("foo/bar")
+        Mapper.namespaces.should == {:foo => @namespace_mapper}
       end 
-
-    end 
-
-
-    describe ".include" do
-
-      it "should delegate to map_definition" do
+      
+      it "should instance eval any block passed to it on the NamespaceMapper object" do
         # expect
-        @map_definition.should_receive(:register_include).with(:another_mapping, {})
-
-        # given
-        Mapper.reset
-        Mapper.include(:another_mapping)
+        @namespace_mapper.should_receive(:instance_eval)
+        
+        # when
+        Mapper.namespace(:foo) { }
       end
       
-    end
-    
-    describe ".map" do 
-      
-      before(:each) do
-        Mapper.reset
-        @opts = {:to => "bar/foo", :from => "foo/bar"}
-        Mapper.config(:foo) { |m| m.direction :from => :xml, :to => :hash}
+      it "should delegate to NamespaceMapper" do
+        # expect
+        NamespaceMapper.should_receive(:new).with(:foo)
+
+        # when
+        Mapper.namespace(:foo) { }
       end
       
-      it "should register mappings" do 
-        # expect
-        @map_definition.should_receive(:register_rule).with(@opts)
-
-        # given
-        Mapper.map @opts
+      describe "when a mapping key already exists" do 
+        
+        it "should raise an error" do 
+          pending
+          # given
+          Mapper.namespace(:bar) { }
+          
+          # expect
+          running { Mapper.namespace(:bar) {} }.should raise_error(MapperError, "A mapping for the key bar currently exists.  Are you sure you want to merge the mapping you are about to do with the existing mapping?")
+        end
       end
       
     end
 
     describe ".reset" do 
-      
-      it "should reset direction" do 
-        # when
-        Mapper.reset
-        
-        # expect
-        Mapper.direction.should == {}
-      end
 
-      it "should reset mappings" do 
+      before(:each) do
+        Mapper.define(:foo) { }
+        Mapper.namespace(:foo) { }
+      end
+      
+      it "should reset definition mappings" do 
         # when
         Mapper.reset
         
         # expect
         Mapper.definitions.should == {}
       end
+
+      it "should reset namespace mappings" do 
+        # when
+        Mapper.reset
+        
+        # expect
+        Mapper.namespaces.should == {}
+      end
     end
-
-    describe ".prepopulate" do 
-
-      it "should delegate prepopulate data to target mapper" do 
-        # expect
-        @map_definition.should_receive(:register_prepopulate).with("event/api_version")
-
-        # given
-        Mapper.reset
-        Mapper.prepopulate("event/api_version")
-      end 
-
-    end 
-
-    describe ".to" do 
-
-      it "should delegate target block to target mapper" do 
-        # expect
-        @map_definition.should_receive(:register_to) #.with(kind_of(Proc))
-
-        # given
-        Mapper.reset
-        Mapper.to do |value|
-          if(value=="baz")
-            "value/is/baz"
-          else 
-            "value/is/not/baz"
-          end 
-        end 
-      end 
-
-    end 
     
     describe ".translate" do 
 
-      before(:each) do
-        @xml = '<foo><bar>baz</baz></foo>'
-        Mapper.reset
-        Mapper.config(:foo) do |m| 
-          m.direction :from => :xml, :to => :hash
-          m.map :from => "foo/bar", :to => "bar/foo"
+      context "when translating a namespace" do
+
+        it "should delegate to NamespaceMapper" do
+          # given
+          namespace_mapper = mock("NamespaceMapper")
+          Mapper.namespaces[:foo] = namespace_mapper
+
+          # expect
+          namespace_mapper.should_receive(:translate).with(:bar, @xml)
+
+          # when
+          Mapper.translate_namespace(:foo, :bar, @xml)
         end
+
+        describe "when no key exists for target mapper" do 
+          
+          it "should raise an error" do 
+            running { Mapper.translate_namespace(:foo, :bar, @xml) }.should raise_error(MapperError)
+          end
+        end
+        
       end
 
-      it "should map target elements" do 
-        # expect
-        @map_definition.should_receive(:translate).with(@xml).and_return({})
+      context "when translating a definition" do
 
-        # given
-        Mapper.translate(:foo, @xml)
+        before(:each) do
+          @definition_mapper = mock("DefinitionMapper", :direction => nil, :map => nil)
+          DefinitionMapper.stub!(:new).and_return(@definition_mapper)
+          Mapper.reset
+          @xml = "<foo>bar</foo>"
+        end
+
+        it "should map target elements" do 
+          # given
+          definition_mapper = mock("DefinitionMapper")
+          Mapper.definitions[:foo] = definition_mapper
+
+          # expect
+          definition_mapper.should_receive(:translate).with(@xml).and_return({})
+
+          # when
+          Mapper.translate(:foo, @xml)
+        end
+        
       end
       
       describe "when no key exists for target mapper" do 
@@ -197,44 +177,50 @@ module Ptolemy
       end
       
     end
-
     
-    describe "mapping conditions" do 
+  end
 
-      before(:each) do
-        Mapper.reset
-        @opts = {:to => "bar/foo", :from => "foo/bar"}
-        Mapper.config(:foo) { |m| m.direction :from => :xml, :to => :hash}
-      end
-      
-      describe ".when" do 
+  describe DefinitionMapper do
 
-        it "should delegate it to target mapper" do 
-          # expect
-          @map_definition.should_receive(:register_condition) #.with(:when, an_instance_of(Proc)).and_return(@when_conditions)
-          
-          # given
-          Mapper.map(@opts).when do |value|
-            value =~ /baz/
-          end
-        end
-        
-      end
+    describe "#translate" do
 
-      describe ".unless" do 
+      it "should delegate to MapDefinition object" do
+        # given
+        map_definition = mock("MapDefinition")
+        MapDefinition.stub!(:new).and_return(map_definition)
+        definition_mapper = DefinitionMapper.new(:foo)
+        xml = "<foo>bar</foo>"
 
-        it "should delegate it to target mapper" do 
-          # expect
-          @map_definition.should_receive(:register_condition).with(:unless, :nil) #.with(:when, an_instance_of(Proc)).and_return(@when_conditions)
-          
-          # given
-          Mapper.map(@opts).unless(:nil)
-        end
-        
+        # expect
+        map_definition.should_receive(:translate).with(xml)
+
+        # when
+        definition_mapper.translate(xml)
       end
       
     end
 
-  end
+  end 
   
+  describe NamespaceMapper do
+
+    describe "#translate" do
+
+      it "should delegate to MapDefinition object" do
+        # given
+        map_definition = mock("MapDefinition")
+        namespace_mapper = NamespaceMapper.new(:foo)
+        xml = "<foo>bar</foo>"
+        namespace_mapper.definitions[:foo] = map_definition
+
+        # expect
+        map_definition.should_receive(:translate).with(xml)
+
+        # when
+        namespace_mapper.translate(:foo, xml)
+      end
+      
+    end
+
+  end 
 end

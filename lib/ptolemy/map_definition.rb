@@ -3,7 +3,7 @@ class MapDefinitionError < Exception; end
 module Ptolemy
 
   class MapDefinition
-    attr_reader :rules, :direction
+    attr_reader :rules, :dir
     
     def initialize
       @rules = []
@@ -13,7 +13,7 @@ module Ptolemy
       raise MapDefinitionError, "Direction must be a hash" unless dir.is_a?(Hash)
       raise MapDefinitionError, "Both :from and :to keys must be set (e.g., {:from => :xml, :to => :hash}" unless (dir[:from] && dir[:to])
 
-      @direction = dir
+      @dir = dir
     end
     
     def unless(condition=nil, &block)
@@ -31,7 +31,7 @@ module Ptolemy
     
     def from(from_str)
       raise MapDefinitionError, "Please specify a source mapping" if from_str.nil?
-      source = MapFactory.source(@direction, {:from => from_str})
+      source = MapFactory.source(@dir, {:from => from_str})
 
       @rules << MapRule.new(source)
       self
@@ -58,24 +58,24 @@ module Ptolemy
     def map(opts={})
       raise MapDefinitionError, "Both :from and :to keys must be set (e.g., {:from => \"foo/bar\", :to => \"bar/foo\")" unless (opts[:from] && opts[:to])
       
-      @rules << MapRule.new(MapFactory.source(@direction, opts), MapFactory.target(@direction, opts))
+      @rules << MapRule.new(MapFactory.source(@dir, opts), MapFactory.target(@dir, opts))
       self
     end
     
     def reset
-      @rules, @direction = [], nil
+      @rules, @dir = [], nil
     end
 
     def prepopulate(target_data)
       source_proxy = SourceProxy.new
-      @rules << MapRule.new(source_proxy, MapFactory.target(@direction, {:to => target_data}))
+      @rules << MapRule.new(source_proxy, MapFactory.target(@dir, {:to => target_data}))
       source_proxy
     end
 
     def to(&block)
       raise MapDefinitionError, "You must call the .from method before customizing the .to method (e.g., m.from(\"foo\").to {|value| ...}" unless @rules.last
 
-      target = MapFactory.target(@direction, {:to => '', :to_proc => block})
+      target = MapFactory.target(@dir, {:to => '', :to_proc => block})
       @rules.last.target = target
       self
     end
