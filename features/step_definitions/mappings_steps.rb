@@ -4,89 +4,110 @@ Given /^a mapping exists for '(.*)' to '(.*)' with tag '(.*)'$/ do |source, targ
   
   case @direction
   when {:from => :xml, :to => :hash}
-    Ptolemy::Mapper.config(@tag.to_sym) do |m|
-      m.direction :from => :xml, :to => :hash
+  str = <<-EOT
+    define :#{@tag} do
+      direction :from => :xml, :to => :hash
 
-      m.map :from => "foo/bar", :to => "bar/foo"
-      m.map :from => "foo/baz", :to => "bar/boo"
-      m.map :from => "foo/cuk/coo", :to => "foo/bar/coo"
-      m.map :from => "foo/cuk/doo", :to => "doo"
+      map :from => "foo/bar", :to => "bar/foo"
+      map :from => "foo/baz", :to => "bar/boo"
+      map :from => "foo/cuk/coo", :to => "foo/bar/coo"
+      map :from => "foo/cuk/doo", :to => "doo"
     end
+EOT
+  Ptolemy::Mapper.load_str(str)
   when {:from => :hash, :to => :xml}
-    Ptolemy::Mapper.config(@tag.to_sym) do |m|
-      m.direction :from => :hash, :to => :xml
+  str = <<-EOT
+    define :#{@tag} do
+      direction :from => :hash, :to => :xml
 
-      m.map :from => "foo/bar", :to => "bar/foo"
-      m.map :from => "foo/baz", :to => "bar/boo"
-      m.map :from => "foo/cuk/coo", :to => "bar/cuk/coo"
-      m.map :from => "foo/cuk/doo", :to => "bar/cuk/doo"
+      map :from => "foo/bar", :to => "bar/foo"
+      map :from => "foo/baz", :to => "bar/boo"
+      map :from => "foo/cuk/coo", :to => "bar/cuk/coo"
+      map :from => "foo/cuk/doo", :to => "bar/cuk/doo"
     end
+EOT
+  Ptolemy::Mapper.load_str(str)
   when {:from => :hash, :to => :hash}
-    Ptolemy::Mapper.config(@tag.to_sym) do |m|
-      m.direction :from => :hash, :to => :hash
+  str = <<-EOT
+    define :#{@tag} do
+      direction :from => :hash, :to => :hash
 
-      m.map :from => "foo", :to => "zoo"
-      m.map :from => "bar", :to => "yoo"
-      m.map :from => "baz", :to => "too"
-      m.map :from => "boo", :to => "soo/roo"
+      map :from => "foo", :to => "zoo"
+      map :from => "bar", :to => "yoo"
+      map :from => "baz", :to => "too"
+      map :from => "boo", :to => "soo/roo"
     end
+EOT
+  Ptolemy::Mapper.load_str(str)
   end
 end
 
 Given /^a mapping exists with '(.*)' condition$/ do |condition|
   case condition
   when /unless/
-    Ptolemy::Mapper.config(:ignore) do |m|
-      m.direction :from => :xml, :to => :hash
+  str = <<-EOT
+    define :ignore do
+      direction :from => :xml, :to => :hash
 
-      m.map :from => "foo/bar", :to => "bar/foo"
-      m.map(:from => "foo/baz", :to => "bar/boo").unless(:empty)
+      map :from => "foo/bar", :to => "bar/foo"
+      map(:from => "foo/baz", :to => "bar/boo").unless(:empty)
     end
+EOT
+  Ptolemy::Mapper.load_str(str)
  when /when/
-    Ptolemy::Mapper.config(:when) do |m|
-      m.direction :from => :xml, :to => :hash
+  str = <<-EOT
+    define :when do
+      direction :from => :xml, :to => :hash
 
-      m.map(:from => "foo/bar", :to => "bar/foo").when do |value|
+      map(:from => "foo/bar", :to => "bar/foo").when do |value|
         value =~ /hubba/
       end 
-      m.map(:from => "foo/baz", :to => "bar/boo").when do |value|
+      map(:from => "foo/baz", :to => "bar/boo").when do |value|
         value =~ /bubba/
       end 
     end
+EOT
+  Ptolemy::Mapper.load_str(str)
   end
 end
 
 Given /^a mapping exists with concatenation$/ do
-  Ptolemy::Mapper.config(:concatenation) do |m|
-    m.direction :from => :xml, :to => :hash
+  str = <<-EOT
+  define :concatenation do
+    direction :from => :xml, :to => :hash
 
-    # <event><decision_request><target_factors><institutions><institution>FOO</institution><institution>BAR</institution><institution>BAZ</institution></institutions></target_factors></decision_request></event>
-    m.map(:from => "event/decision_request/target_factors/institutions", :to => "event/new_update_status_code").customize do |node|
+    map(:from => "event/decision_request/target_factors/institutions", :to => "event/new_update_status_code").customize do |node|
       node.concatenate_children("|")
     end
   end
+EOT
+  Ptolemy::Mapper.load_str(str)
 end
 
 Given /^a customized mapping exists for '(.*)' to '(.*)' with tag '(.*)'$/ do |source, target, tag|
-  @mapping_tag = tag.to_sym
-  @direction = {:from => source.to_sym, :to => target.to_sym}
-  
+  @mapping_tag = tag
+  @direction = ":from => #{source.to_sym}, :to => #{target.to_sym}"
+
   case @direction
   when {:from => :xml, :to => :hash}
-    Ptolemy::Mapper.config(@mapping_tag.to_sym) do |m|
-      m.direction @direction
+    str = <<-EOT
+    define :#{@mapping_tag} do
+      direction #{@direction}
       
-      m.map(:from => "event/progress/statuses", :to => "event/new_update_status_code").customize do |node|
+      map(:from => "event/progress/statuses", :to => "event/new_update_status_code").customize do |node|
         res = []
         node.elements.map { |nd| res << {"name" => nd.child_content("code"), "text" => nd.child_content("message")} }
         res
       end
     end 
+EOT
+  Ptolemy::Mapper.load_str(str)
   when {:from => :hash, :to => :xml}
-    Ptolemy::Mapper.config(@mapping_tag.to_sym) do |m|
-      m.direction @direction
+    str = <<-EOT
+    define :#{@mapping_tag} do
+      direction #{@direction}
       
-      m.map(:from => "event/rankings", :to => "event/response").customize do |val|
+      map(:from => "event/rankings", :to => "event/response").customize do |val|
         node = new_node("rankings") do |rankings|
 
           val.each do |rnk|
@@ -115,29 +136,34 @@ Given /^a customized mapping exists for '(.*)' to '(.*)' with tag '(.*)'$/ do |s
         end 
       end
     end 
-  end 
+EOT
 
+  Ptolemy::Mapper.load_str(str)
+  end 
 end
 
 Given /^a mapping exists with a customized block$/ do
-  Ptolemy::Mapper.config(:customized) do |m|
-    m.direction :from => :xml, :to => :hash
+  str = <<-EOT
+  define :customized do
+    direction :from => :xml, :to => :hash
     
-    # <event><progress><statuses><status><code>Abandoned</code><message>bad phone</message></status></statuses></progress></event>
-    m.map(:from => "event/progress/statuses", :to => "event/new_update_status_code").customize do |node|
+    map(:from => "event/progress/statuses", :to => "event/new_update_status_code").customize do |node|
       res = []
       node.elements.map { |nd| res << {"name" => nd.child_content("code"), "text" => nd.child_content("message")} }
       res
     end
   end 
+EOT
+
+  Ptolemy::Mapper.load_str(str)
 end
 
 Given /^a mapping exists with custom \.to method$/ do
-  Ptolemy::Mapper.config(:custom_to) do |m|
-    m.direction :from => :xml, :to => :hash
+  str = <<-EOT
+  define :custom_to do
+    direction :from => :xml, :to => :hash
 
-    # xml = "<foo><bar>baz</bar></foo>"
-    m.from("foo/bar").to do |value|
+    from("foo/bar").to do |value|
       if(value == "baz")
         "value/was/baz"
       else 
@@ -145,58 +171,73 @@ Given /^a mapping exists with custom \.to method$/ do
       end 
     end
   end 
+EOT
+
+  Ptolemy::Mapper.load_str(str)
 end
 
 Given /^a mapping exists with include$/ do
-  Ptolemy::Mapper.config(:another_map) do |m|
-    m.direction :from => :hash, :to => :hash
+  str = <<-EOT
+  define :another_map do
+    direction :from => :hash, :to => :hash
 
-    m.map :from => "foo", :to => "zoo"
-    m.map :from => "bar", :to => "yoo"
+    map :from => "foo", :to => "zoo"
+    map :from => "bar", :to => "yoo"
   end
 
-  Ptolemy::Mapper.config(:include_another_map) do |m|
-    m.direction :from => :hash, :to => :hash
+  define :include_another_map do
+    direction :from => :hash, :to => :hash
 
-    m.include :another_map
-    m.map :from => "baz", :to => "too"
-    m.map :from => "boo", :to => "soo/roo"
+    include :another_map
+    map :from => "baz", :to => "too"
+    map :from => "boo", :to => "soo/roo"
   end
+EOT
+
+  Ptolemy::Mapper.load_str(str)
 end
 
 Given /^a contact mapping exists with nested include$/ do
-  Ptolemy::Mapper.config(:a_sample_person) do |m|
-    m.direction :from => :hash, :to => :hash
+  str = <<-EOT
+  define :a_sample_person do
+    direction :from => :hash, :to => :hash
 
-    m.map :from => "name/first", :to => "first_name"
-    m.map :from => "name/last", :to => "last_name"
+    map :from => "name/first", :to => "first_name"
+    map :from => "name/last", :to => "last_name"
   end
 
-  Ptolemy::Mapper.config(:a_sample_contact) do |m|
-    m.direction :from => :hash, :to => :hash
+  define :a_sample_contact do
+    direction :from => :hash, :to => :hash
 
-    m.include :a_sample_person, :inside_of => "contact"
-    m.map :from => "contact/phone/home", :to => "contact/home_phone"
+    include :a_sample_person, :inside_of => "contact"
+    map :from => "contact/phone/home", :to => "contact/home_phone"
   end
+EOT
+
+  Ptolemy::Mapper.load_str(str)
 end
 
 Given /^a mapping exists with prepopulate method$/ do
-  Ptolemy::Mapper.config(:api) do |m|
-    m.direction :from => :hash, :to => :xml
+  str = <<-EOT
+  define :api do
+    direction :from => :hash, :to => :xml
 
-    m.prepopulate("event/api_version").with("2.0.1")
-    m.map :from => "name/first", :to => "event/first_name"
-    m.map :from => "name/last", :to => "event/last_name"
+    prepopulate("event/api_version").with("2.0.1")
+    map :from => "name/first", :to => "event/first_name"
+    map :from => "name/last", :to => "event/last_name"
   end
+EOT
+
+  Ptolemy::Mapper.load_str(str)
 end
 
 Given /^a '(\w+)' mapping exists within namespace '(\w+)'$/ do |definition, namespace|
+  @namespace = namespace
 
-  Ptolemy::Mapper.definition do
+  str = <<-EOT
+    namespace :#{@namespace} do
 
-    namespace namespace.to_sym do
-
-      define definition.to_sym do
+      define :#{definition} do
         direction :from => :hash, :to => :xml
 
         map :from => "name/first", :to => "event/first_name"
@@ -204,7 +245,9 @@ Given /^a '(\w+)' mapping exists within namespace '(\w+)'$/ do |definition, name
       end
 
     end 
-  end 
+EOT
+
+  Ptolemy::Mapper.load_str(str)
 end
 
 
@@ -337,7 +380,8 @@ When /^the mapping with prepopulate method is translated$/ do
 end
 
 When /^the mapping with namespace 'sales' is translated$/ do
-  pending
+  hash = {:name => {:first => "Chris", :last => "Wyckoff"}}
+  @translation = Ptolemy::Mapper.translate_namespace(:sales, :contact, hash)
 end
 
 
@@ -439,5 +483,13 @@ EOT
 end
 
 Then /^the target should be correctly processed$/ do
-  pending
+  xml = <<-EOT
+<?xml version="1.0" encoding="UTF-8"?>
+<event>
+  <first_name>Chris</first_name>
+  <last_name>Wyckoff</last_name>
+</event>
+EOT
+
+  @translation.to_s.should == xml
 end
