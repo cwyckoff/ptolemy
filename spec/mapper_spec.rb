@@ -2,6 +2,15 @@ require File.expand_path(File.dirname(__FILE__) + "/spec_helper")
 
 module Ptolemy
 
+  PTOLEMY_STR = <<-EOT
+   define "baz" do
+    direction :from => :hash, :to => :xml
+
+    map :from => "name/first", :to => "event/first_name"
+    map :from => "name/last", :to => "event/last_name"
+  end
+EOT
+
   describe "Mapper" do
 
     before(:each) do
@@ -50,6 +59,45 @@ module Ptolemy
         end
       end
       
+    end
+
+    describe "#directory" do
+
+      it "should register directory of mapping files" do
+        # given
+        Mapper.map_directory = "/foo/bar"
+
+        # expect
+        Mapper.map_directory.should == "/foo/bar"
+      end
+
+    end 
+
+    describe "#load_maps" do
+
+      it "should read file contents as a string" do
+        # given
+        Dir.stub!(:glob).and_return(["boo.pmy"])
+
+        # expect
+        File.should_receive(:read).with("boo.pmy").and_return(PTOLEMY_STR)
+
+        # when
+        Mapper.load_maps
+      end
+
+      describe "if directory is empty" do
+
+        it "should raise a LoadError" do
+          # given
+          Mapper.map_directory = "/foo/bar"
+          Dir.stub!(:glob).and_return([])
+
+          # expect
+          running { Mapper.load_maps }.should raise_error(LoadError, "No maps defined for map directory /foo/bar.  Please save your mapping files to a map directory and let Ptolemy know about it (e.g., Ptolemy::Mapper.map_directory = '/foo/bar')")
+        end
+        
+      end
     end
 
     describe ".namespace" do

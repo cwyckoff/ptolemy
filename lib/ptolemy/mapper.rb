@@ -6,6 +6,7 @@ module Ptolemy
     
     class << self
       attr_reader :current_map_definition_key
+      attr_accessor :map_directory
 
       def [](key)
         definitions[key.to_sym]
@@ -21,6 +22,15 @@ module Ptolemy
       def definitions
         @definitions ||= {}
       end
+
+      def load_maps
+        path = File.join(map_directory, "*.pmy")
+        raise LoadError, "No maps defined for map directory #{map_directory}.  Please save your mapping files to a map directory and let Ptolemy know about it (e.g., Ptolemy::Mapper.map_directory = '/foo/bar')" unless Dir.glob(path).size > 0
+
+        Dir.glob(path).each do |map|
+          load_str(File.read(map))
+        end
+      end 
       
       def load_str(str)
         instance_eval(str.strip)
