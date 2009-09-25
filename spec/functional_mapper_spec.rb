@@ -8,10 +8,10 @@ module Ptolemy
 @namespace_pmy = <<-EOT
   namespace "foo" do
      define "bar" do
-      direction :from => :hash, :to => :xml
+      direction "hash" => "xml"
 
-      map :from => "name/first", :to => "event/first_name"
-      map :from => "name/last", :to => "event/last_name"
+      map "name/first" => "event/first_name"
+      map "name/last" => "event/last_name"
     end
    end 
 EOT
@@ -19,9 +19,9 @@ EOT
 @define_pmy = <<-EOT
    define "baz" do
 
-    direction :from => :hash, :to => :xml
-     map :from => "name/first", :to => "event/first_name"
-    map :from => "name/last", :to => "event/last_name"
+    direction "hash" => "xml"
+    map "name/first" => "event/first_name"
+    map "name/last" => "event/last_name"
 
   end
 EOT

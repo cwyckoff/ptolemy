@@ -10,8 +10,8 @@ module Ptolemy
       MapFactory.stub!(:source).and_return(@source_element = mock("XmlMap", :value_from => "bar"))
       MapFactory.stub!(:target).and_return(@target_element = mock("HashMap", :map_from => {}, :class => @hash_map_klass))
       @map_definition = MapDefinition.new
-      @map_definition.direction({:from => :xml, :to => :hash})
-      @opts = {:to => "bar/foo", :from => "foo/bar"}
+      @map_definition.direction({"xml" => "hash"})
+      @opts = {"foo/bar" => "bar/foo"}
       @map_definition.map(@opts)
     end
     
@@ -44,7 +44,7 @@ module Ptolemy
       
       it "should create new source object" do 
         # expect
-        MapFactory.should_receive(:source).with({:from => :xml, :to => :hash}, {:from => "foo/bar"})
+        MapFactory.should_receive(:source).with({"xml" => "hash"}, {"foo/bar" => ""})
         
         # given
         @map_definition.from("foo/bar")
@@ -137,7 +137,7 @@ module Ptolemy
       def do_process
         @source_element.stub!(:class).and_return(@xml_map_klass = mock("XmlMapKlass", :filter_source => @xml))
         @map_definition.reset
-        @map_definition.direction(:from => :xml, :to => :hash)
+        @map_definition.direction("xml" => "hash")
         @map_definition.map(@opts)
       end
       
@@ -145,7 +145,7 @@ module Ptolemy
         # given
         @source_element.stub!(:class).and_return(mock("XmlMapKlass", :filter_source => @xml))
         @map_definition.reset
-        @map_definition.direction(:from => :xml, :to => :hash)
+        @map_definition.direction("xml" => "hash")
         map_rule = MapRule.new(@source_element, @target_element)
         MapRule.stub!(:new).and_return(map_rule)
 
@@ -162,10 +162,10 @@ module Ptolemy
 
           def do_process
             @map_definition.reset
-            @map_definition.direction(:from => :xml, :to => :hash)
-            @map_definition.map({:to => "bar/foo", :from => "foo/bar"})
-            @map_definition.map({:to => "bar/baz", :from => "foo/baz"})
-            @map_definition.map({:to => "bar/boo", :from => "foo/boo"})
+            @map_definition.direction("xml" => "hash")
+            @map_definition.map({"bar/foo" => "foo/bar"})
+            @map_definition.map({"bar/baz" => "foo/baz"})
+            @map_definition.map({"bar/boo" => "foo/boo"})
           end
           
           it "should delegate creation of the initial target to the target element" do 
@@ -207,7 +207,7 @@ module Ptolemy
       
       it "should create new target object" do 
         # expect
-        MapFactory.should_receive(:target).with({:from => :xml, :to => :hash}, {:to => @target_data})
+        MapFactory.should_receive(:target).with({"xml" => "hash"}, {:to => @target_data})
         
         # when
         @map_definition.prepopulate(@target_data)
@@ -232,7 +232,7 @@ module Ptolemy
       
       it "should create new target object" do 
         # expect
-        MapFactory.should_receive(:target).with({:from => :xml, :to => :hash}, {:to => '', :to_proc => nil})
+        MapFactory.should_receive(:target).with({"xml" => "hash"}, {:to => '', :to_proc => nil})
         
         # given
         @map_definition.to

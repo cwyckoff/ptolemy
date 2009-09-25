@@ -11,7 +11,6 @@ module Ptolemy
 
     def direction(dir)
       raise MapDefinitionError, "Direction must be a hash" unless dir.is_a?(Hash)
-      raise MapDefinitionError, "Both :from and :to keys must be set (e.g., {:from => :xml, :to => :hash}" unless (dir[:from] && dir[:to])
 
       @dir = dir
     end
@@ -31,7 +30,7 @@ module Ptolemy
     
     def from(from_str)
       raise MapDefinitionError, "Please specify a source mapping" if from_str.nil?
-      source = MapFactory.source(@dir, {:from => from_str})
+      source = MapFactory.source(@dir, {from_str => ''})
 
       @rules << MapRule.new(source)
       self
@@ -56,7 +55,7 @@ module Ptolemy
     end
 
     def map(opts={})
-      raise MapDefinitionError, "Both :from and :to keys must be set (e.g., {:from => \"foo/bar\", :to => \"bar/foo\")" unless (opts[:from] && opts[:to])
+      raise MapDefinitionError, "Both key and value pair must be set (e.g., {\"foo/bar\" => \"bar/foo\")" if (opts.empty?)
       
       @rules << MapRule.new(MapFactory.source(@dir, opts), MapFactory.target(@dir, opts))
       self

@@ -77,10 +77,10 @@ EOT
 
       it "should read file contents as a string" do
         # given
-        Dir.stub!(:glob).and_return(["boo.pmy"])
+        Dir.stub!(:glob).and_return(["boo.rb"])
 
         # expect
-        File.should_receive(:read).with("boo.pmy").and_return(PTOLEMY_STR)
+        File.should_receive(:read).with("boo.rb").and_return("")
 
         # when
         Mapper.load_maps

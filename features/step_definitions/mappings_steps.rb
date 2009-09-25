@@ -1,41 +1,41 @@
 Given /^a mapping exists for '(.*)' to '(.*)' with tag '(.*)'$/ do |source, target, mapping_tag|
-  @direction = {:from => source.to_sym, :to => target.to_sym}
+  @direction = {source.to_sym => target.to_sym}
   @tag = mapping_tag
   
   case @direction
   when {:from => :xml, :to => :hash}
   str = <<-EOT
     define :#{@tag} do
-      direction :from => :xml, :to => :hash
+      direction "xml" => "hash"
 
-      map :from => "foo/bar", :to => "bar/foo"
-      map :from => "foo/baz", :to => "bar/boo"
-      map :from => "foo/cuk/coo", :to => "foo/bar/coo"
-      map :from => "foo/cuk/doo", :to => "doo"
+      map "foo/bar" => "bar/foo"
+      map "foo/baz" => "bar/boo"
+      map "foo/cuk/coo" => "foo/bar/coo"
+      map "foo/cuk/doo" => "doo"
     end
 EOT
   Ptolemy::Mapper.load_str(str)
   when {:from => :hash, :to => :xml}
   str = <<-EOT
     define :#{@tag} do
-      direction :from => :hash, :to => :xml
+      direction "hash" => "xml"
 
-      map :from => "foo/bar", :to => "bar/foo"
-      map :from => "foo/baz", :to => "bar/boo"
-      map :from => "foo/cuk/coo", :to => "bar/cuk/coo"
-      map :from => "foo/cuk/doo", :to => "bar/cuk/doo"
+      map "foo/bar" => "bar/foo"
+      map "foo/baz" => "bar/boo"
+      map "foo/cuk/coo" => "bar/cuk/coo"
+      map "foo/cuk/doo" => "bar/cuk/doo"
     end
 EOT
   Ptolemy::Mapper.load_str(str)
   when {:from => :hash, :to => :hash}
   str = <<-EOT
     define :#{@tag} do
-      direction :from => :hash, :to => :hash
+      direction "hash" => "hash"
 
-      map :from => "foo", :to => "zoo"
-      map :from => "bar", :to => "yoo"
-      map :from => "baz", :to => "too"
-      map :from => "boo", :to => "soo/roo"
+      map "foo" => "zoo"
+      map "bar" => "yoo"
+      map "baz" => "too"
+      map "boo" => "soo/roo"
     end
 EOT
   Ptolemy::Mapper.load_str(str)
@@ -47,22 +47,22 @@ Given /^a mapping exists with '(.*)' condition$/ do |condition|
   when /unless/
   str = <<-EOT
     define :ignore do
-      direction :from => :xml, :to => :hash
+      direction "xml" => "hash"
 
-      map :from => "foo/bar", :to => "bar/foo"
-      map(:from => "foo/baz", :to => "bar/boo").unless(:empty)
+      map "foo/bar" => "bar/foo"
+      map("foo/baz" => "bar/boo").unless(:empty)
     end
 EOT
   Ptolemy::Mapper.load_str(str)
  when /when/
   str = <<-EOT
     define :when do
-      direction :from => :xml, :to => :hash
+      direction "xml" => "hash"
 
-      map(:from => "foo/bar", :to => "bar/foo").when do |value|
+      map("foo/bar" => "bar/foo").when do |value|
         value =~ /hubba/
       end 
-      map(:from => "foo/baz", :to => "bar/boo").when do |value|
+      map("foo/baz" => "bar/boo").when do |value|
         value =~ /bubba/
       end 
     end
@@ -74,9 +74,9 @@ end
 Given /^a mapping exists with concatenation$/ do
   str = <<-EOT
   define :concatenation do
-    direction :from => :xml, :to => :hash
+    direction "xml" => "hash"
 
-    map(:from => "event/decision_request/target_factors/institutions", :to => "event/new_update_status_code").customize do |node|
+    map("event/decision_request/target_factors/institutions" => "event/new_update_status_code").customize do |node|
       node.concatenate_children("|")
     end
   end
@@ -86,7 +86,7 @@ end
 
 Given /^a customized mapping exists for '(.*)' to '(.*)' with tag '(.*)'$/ do |source, target, tag|
   @mapping_tag = tag
-  @direction = ":from => #{source.to_sym}, :to => #{target.to_sym}"
+  @direction = "#{source.to_sym} => #{target.to_sym}"
 
   case @direction
   when {:from => :xml, :to => :hash}
@@ -94,7 +94,7 @@ Given /^a customized mapping exists for '(.*)' to '(.*)' with tag '(.*)'$/ do |s
     define :#{@mapping_tag} do
       direction #{@direction}
       
-      map(:from => "event/progress/statuses", :to => "event/new_update_status_code").customize do |node|
+      map("event/progress/statuses" => "event/new_update_status_code").customize do |node|
         res = []
         node.elements.map { |nd| res << {"name" => nd.child_content("code"), "text" => nd.child_content("message")} }
         res
@@ -107,7 +107,7 @@ EOT
     define :#{@mapping_tag} do
       direction #{@direction}
       
-      map(:from => "event/rankings", :to => "event/response").customize do |val|
+      map("event/rankings" => "event/response").customize do |val|
         node = new_node("rankings") do |rankings|
 
           val.each do |rnk|
@@ -145,9 +145,9 @@ end
 Given /^a mapping exists with a customized block$/ do
   str = <<-EOT
   define :customized do
-    direction :from => :xml, :to => :hash
+    direction "xml" => "hash"
     
-    map(:from => "event/progress/statuses", :to => "event/new_update_status_code").customize do |node|
+    map("event/progress/statuses" => "event/new_update_status_code").customize do |node|
       res = []
       node.elements.map { |nd| res << {"name" => nd.child_content("code"), "text" => nd.child_content("message")} }
       res
@@ -161,7 +161,7 @@ end
 Given /^a mapping exists with custom \.to method$/ do
   str = <<-EOT
   define :custom_to do
-    direction :from => :xml, :to => :hash
+    direction "xml" => "hash"
 
     from("foo/bar").to do |value|
       if(value == "baz")
@@ -179,18 +179,18 @@ end
 Given /^a mapping exists with include$/ do
   str = <<-EOT
   define :another_map do
-    direction :from => :hash, :to => :hash
+    direction "hash" => "hash"
 
-    map :from => "foo", :to => "zoo"
-    map :from => "bar", :to => "yoo"
+    map "foo" => "zoo"
+    map "bar" => "yoo"
   end
 
   define :include_another_map do
-    direction :from => :hash, :to => :hash
+    direction "hash" => "hash"
 
     include :another_map
-    map :from => "baz", :to => "too"
-    map :from => "boo", :to => "soo/roo"
+    map "baz" => "too"
+    map "boo" => "soo/roo"
   end
 EOT
 
@@ -200,17 +200,17 @@ end
 Given /^a contact mapping exists with nested include$/ do
   str = <<-EOT
   define :a_sample_person do
-    direction :from => :hash, :to => :hash
+    direction "hash" => "hash"
 
-    map :from => "name/first", :to => "first_name"
-    map :from => "name/last", :to => "last_name"
+    map "name/first" => "first_name"
+    map "name/last" => "last_name"
   end
 
   define :a_sample_contact do
-    direction :from => :hash, :to => :hash
+    direction "hash" => "hash"
 
     include :a_sample_person, :inside_of => "contact"
-    map :from => "contact/phone/home", :to => "contact/home_phone"
+    map "contact/phone/home" => "contact/home_phone"
   end
 EOT
 
@@ -220,11 +220,11 @@ end
 Given /^a mapping exists with prepopulate method$/ do
   str = <<-EOT
   define :api do
-    direction :from => :hash, :to => :xml
+    direction "hash" => "xml"
 
     prepopulate("event/api_version").with("2.0.1")
-    map :from => "name/first", :to => "event/first_name"
-    map :from => "name/last", :to => "event/last_name"
+    map "name/first" => "event/first_name"
+    map "name/last" => "event/last_name"
   end
 EOT
 
@@ -238,10 +238,10 @@ Given /^a '(\w+)' mapping exists within namespace '(\w+)'$/ do |definition, name
     namespace :#{@namespace} do
 
       define :#{definition} do
-        direction :from => :hash, :to => :xml
+        direction "hash" => "xml"
 
-        map :from => "name/first", :to => "event/first_name"
-        map :from => "name/last", :to => "event/last_name"
+        map "name/first" => "event/first_name"
+        map "name/last" => "event/last_name"
       end
 
     end 

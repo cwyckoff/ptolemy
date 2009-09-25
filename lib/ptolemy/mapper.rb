@@ -24,7 +24,7 @@ module Ptolemy
       end
 
       def load_maps
-        path = File.join(map_directory, "*.pmy")
+        path = File.join(map_directory, "*.rb")
         raise LoadError, "No maps defined for map directory #{map_directory}.  Please save your mapping files to a map directory and let Ptolemy know about it (e.g., Ptolemy::Mapper.map_directory = '/foo/bar')" unless Dir.glob(path).size > 0
 
         Dir.glob(path).each do |map|

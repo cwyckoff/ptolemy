@@ -3,12 +3,18 @@ module Ptolemy
   class MapFactory
     
     def self.source(direction, opts={})
-      Ptolemy.const_get("#{direction[:from].to_s.capitalize}Map").new(PathTranslator.new(opts[:from]), opts)
+      Ptolemy.const_get("#{pop(direction, :keys).to_s.capitalize}Map").new(PathTranslator.new(pop(opts, :keys)), opts)
     end
 
     def self.target(direction, opts={})
-      Ptolemy.const_get("#{direction[:to].to_s.capitalize}Map").new(PathTranslator.new(opts[:to]), opts)
+      Ptolemy.const_get("#{pop(direction, :values).to_s.capitalize}Map").new(PathTranslator.new(pop(opts, :values)), opts)
     end
+
+    private
+
+    def self.pop(hash, side)
+      hash.send(side.to_sym).pop
+    end 
 
   end 
 

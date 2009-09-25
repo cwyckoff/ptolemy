@@ -5,7 +5,7 @@ module Ptolemy
   describe "factories" do
 
     before(:all) do 
-      @direction = {:from => :xml, :to => :hash}
+      @direction = {"xml" => "hash"}
       @xml_map = mock("XmlMap")
       @hash_map = mock("HashMap")
       @path_translator = mock("PathTranslator")
@@ -20,10 +20,10 @@ module Ptolemy
           
           it "should instantiate XmlMap" do 
             # expect
-            XmlMap.should_receive(:new).with(@path_translator, {:from => "foo/bar"}).and_return(@xml_map)
+            XmlMap.should_receive(:new).with(@path_translator, {"foo/bar" => "bar/foo"}).and_return(@xml_map)
 
             # given
-            MapFactory.source(@direction, {:from => "foo/bar"})
+            MapFactory.source(@direction, {"foo/bar" => "bar/foo"})
           end
         end
 
@@ -31,10 +31,10 @@ module Ptolemy
           
           it "should instantiate HashMap" do 
             # expect
-            HashMap.should_receive(:new).with(@path_translator, {:from => "foo/bar"}).and_return(@hash_map)
+            HashMap.should_receive(:new).with(@path_translator, {"bar/foo" => "foo/bar"}).and_return(@hash_map)
 
             # given
-            MapFactory.source({:from => :hash, :to => :xml}, {:from => "foo/bar"})
+            MapFactory.source({"hash" => "xml"}, {"bar/foo" => "foo/bar"})
           end
           
         end
@@ -49,10 +49,10 @@ module Ptolemy
             xml_map = mock("XmlMap")
 
             # expect
-            HashMap.should_receive(:new).with(@path_translator, {:to => "bar/foo"}).and_return(@hash_map)
+            HashMap.should_receive(:new).with(@path_translator, {"foo/bar" => "bar/foo"}).and_return(@hash_map)
 
             # given
-            MapFactory.target(@direction, {:to => "bar/foo"})
+            MapFactory.target(@direction, {"foo/bar" => "bar/foo"})
           end
           
         end
@@ -64,10 +64,10 @@ module Ptolemy
             hash_map = mock("HashMap")
 
             # expect
-            XmlMap.should_receive(:new).with(@path_translator, {:to => "bar/foo"}).and_return(@xml_map)
+            XmlMap.should_receive(:new).with(@path_translator, {"foo/bar" => "bar/foo"}).and_return(@xml_map)
 
             # given
-            MapFactory.target({:from => :hash, :to => :xml}, {:to => "bar/foo"})
+            MapFactory.target({"hash" => "xml"}, {"foo/bar" => "bar/foo"})
           end
           
         end
