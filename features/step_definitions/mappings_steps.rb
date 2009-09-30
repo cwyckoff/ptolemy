@@ -1,9 +1,9 @@
 Given /^a mapping exists for '(.*)' to '(.*)' with tag '(.*)'$/ do |source, target, mapping_tag|
-  @direction = {source.to_sym => target.to_sym}
+  @direction = {source => target}
   @tag = mapping_tag
   
   case @direction
-  when {:from => :xml, :to => :hash}
+  when {"xml", "hash"}
   str = <<-EOT
     define :#{@tag} do
       direction "xml" => "hash"
@@ -15,7 +15,7 @@ Given /^a mapping exists for '(.*)' to '(.*)' with tag '(.*)'$/ do |source, targ
     end
 EOT
   Ptolemy::Mapper.load_str(str)
-  when {:from => :hash, :to => :xml}
+  when {"hash" => "xml"}
   str = <<-EOT
     define :#{@tag} do
       direction "hash" => "xml"
@@ -27,7 +27,7 @@ EOT
     end
 EOT
   Ptolemy::Mapper.load_str(str)
-  when {:from => :hash, :to => :hash}
+  when {"hash" => "hash"}
   str = <<-EOT
     define :#{@tag} do
       direction "hash" => "hash"
@@ -89,7 +89,7 @@ Given /^a customized mapping exists for '(.*)' to '(.*)' with tag '(.*)'$/ do |s
   @direction = "#{source.to_sym} => #{target.to_sym}"
 
   case @direction
-  when {:from => :xml, :to => :hash}
+  when {"xml" => "hash"}
     str = <<-EOT
     define :#{@mapping_tag} do
       direction #{@direction}
@@ -102,7 +102,7 @@ Given /^a customized mapping exists for '(.*)' to '(.*)' with tag '(.*)'$/ do |s
     end 
 EOT
   Ptolemy::Mapper.load_str(str)
-  when {:from => :hash, :to => :xml}
+  when {"hash" => "xml"}
     str = <<-EOT
     define :#{@mapping_tag} do
       direction #{@direction}
@@ -250,13 +250,32 @@ EOT
   Ptolemy::Mapper.load_str(str)
 end
 
+Given /^a nested mapping '(\w+)' exists within namespace '(\w+)'$/ do |nested_namespace, namespace|
+  @namespace = namespace
+
+  str = <<-EOT
+    namespace :#{@namespace} do
+      namespace :#{nested_namespace} do
+        define :contact do
+          direction "hash" => "xml"
+  
+          map "name/first" => "event/first_name"
+          map "name/last" => "event/last_name"
+        end
+      end
+    end 
+EOT
+
+  Ptolemy::Mapper.load_str(str)
+end
+
 
 #
 ##
 ###
 When /^the mapping is translated$/ do
   case @direction
-  when {:from => :xml, :to => :hash}
+  when {"xml" => "hash"}
     xml = <<-EOL
 <foo>
  <bar>a</bar>
@@ -268,10 +287,10 @@ When /^the mapping is translated$/ do
 </foo>
 EOL
     @translation = Ptolemy::Mapper.translate(@tag.to_sym, xml)
-  when {:from => :hash, :to => :xml}
+  when {"hash" => "xml"}
     source = {:foo => {:bar => "a", :baz => "b", :cuk => {:coo => "c", :doo => "d"}}}
     @translation = Ptolemy::Mapper.translate(@tag.to_sym, source)
-  when {:from => :hash, :to => :hash}
+  when {"hash" => "hash"}
     source = {:foo => "a", :bar => "b", :baz => "c", :boo => "d"}
     @translation = Ptolemy::Mapper.translate(@tag.to_sym, source)
   end
@@ -310,7 +329,7 @@ When /^the customized mapping is translated$/ do
 #  xml = '<foo><bar>baz</bar><cuk>coo</cuk></foo>'
 #  xml = '<statuses><status><code>Abandoned</code><message>bad phone</message></status><status><code>Rejected</code><message>bad word</message></status></statuses>'
   case @direction
-  when {:from => :xml, :to => :hash}
+  when {"xml" => "hash"}
     xml = <<-EOL
 <event>
  <progress>
@@ -328,7 +347,7 @@ When /^the customized mapping is translated$/ do
 </event>
 EOL
     @translation = Ptolemy::Mapper.translate(@mapping_tag.to_sym, xml)
-  when {:from => :hash, :to => :xml}
+  when {"hash" => "xml"}
     hash = 
     { "event" => 
       {"rankings"=>
@@ -379,9 +398,28 @@ When /^the mapping with prepopulate method is translated$/ do
   @translation = Ptolemy::Mapper.translate(:api, hash)
 end
 
-When /^the mapping with namespace 'sales' is translated$/ do
+When /^the mapping is reversed$/ do
+  xml = <<-EOL
+<bar>
+ <foo>a</foo>
+ <boo>b</boo>
+ <cuk>
+  <coo>c</coo>
+  <doo>d</doo>
+ </cuk>
+</bar>
+EOL
+  @translation = Ptolemy::Mapper.reverse(@tag.to_sym, xml)
+end
+
+When /^the mapping with namespace '(\w+)' is translated$/ do |namespace|
   hash = {:name => {:first => "Chris", :last => "Wyckoff"}}
-  @translation = Ptolemy::Mapper.translate_namespace(:sales, :contact, hash)
+  @translation = Ptolemy::Mapper.translate_namespace(namespace.to_sym, hash)
+end
+
+When /^the '(\w+)' mapping with nested namespace '(\w+)' is translated$/ do |namespace, nested_namespace|
+  hash = {:name => {:first => "Chris", :last => "Wyckoff"}}
+  @translation = Ptolemy::Mapper.translate_namespace(namespace.to_sym, hash)
 end
 
 
@@ -389,13 +427,13 @@ end
 #
 ##
 ###
-Then /^the xml should be correctly mapped$/ do
+Then /^the target should be correctly mapped$/ do
   case @direction
-  when {:from => :xml, :to => :hash}
+  when {"xml" => "hash"}
     @translation.should == {"doo"=>"d", "foo"=>{"bar"=>{"coo"=>"c"}}, "bar"=>{"boo"=>"b", "foo"=>"a"}}
-  when {:from => :hash, :to => :xml}
+  when {"hash" => "xml"}
     @translation.to_s.gsub(/\s/, '').should == '<?xmlversion="1.0"encoding="UTF-8"?><bar><foo>a</foo><boo>b</boo><cuk><coo>c</coo><doo>d</doo></cuk></bar>'    
-  when {:from => :hash, :to => :hash}
+  when {"hash" => "hash"}
     @translation.should == {"zoo" => "a", "yoo" => "b", "too" => "c", "soo" => {"roo" => "d"}}
   end
 end
@@ -416,10 +454,10 @@ end
 
 Then /^the customized target should be correctly processed$/ do
   case @direction
-  when {:from => :xml, :to => :hash}
+  when {"xml" => "hash"}
     translation = {"event"=>{"new_update_status_code"=>[{"name"=>"Abandoned", "text"=>"bad phone"}, {"name"=>"Rejected", "text"=>"bad word"}]}}
     @translation.should == translation
-  when {:from => :hash, :to => :xml}
+  when {"hash" => "xml"}
  translation = <<-EOL
 <?xml version="1.0" encoding="UTF-8"?>
 <event>
@@ -492,4 +530,9 @@ Then /^the target should be correctly processed$/ do
 EOT
 
   @translation.to_s.should == xml
+end
+
+Then /^the target should be correctly reversed$/ do
+  hash = {"foo" => {"bar" => "a", "baz" => "b", "cuk" => {"coo" => "c", "doo" => "d"}}}
+  @translation.should == hash
 end

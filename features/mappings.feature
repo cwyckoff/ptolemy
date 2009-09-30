@@ -3,7 +3,7 @@ Feature: Babel-icious mapping
 Scenario Outline: Mapping from xml to a hash
   Given a mapping exists for '<Source>' to '<Target>' with tag '<MappingTag>'
   When the mapping is translated
-  Then the xml should be correctly mapped
+  Then the target should be correctly mapped
 
   Examples:
   | Source | Target | MappingTag |
@@ -56,10 +56,18 @@ Scenario: Including mappings from another map definition with nesting
   When the mapping with nested include is translated
   Then the target should have nested mappings included from different map 
 
+Scenario: Reverse existing mapping
+  Given a mapping exists for 'hash' to 'xml' with tag 'reverse_contact'
+  When the mapping is reversed
+  Then the target should be correctly reversed
+
 Scenario: Mapping with namespaces
   Given a 'contact' mapping exists within namespace 'sales'
   And a 'contact' mapping exists within namespace 'billing'
   When the mapping with namespace 'sales' is translated
   Then the target should be correctly processed
 
-
+Scenario: Mapping with nested namespaces
+  Given a nested mapping 'billing' exists within namespace 'sales'
+  When the mapping with namespace 'sales' is translated
+  Then the target should be correctly processed

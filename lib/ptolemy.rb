@@ -14,4 +14,5 @@ require "ptolemy/mappers/xml_map"
 require "ptolemy/mappers/hash_map"
 require "ptolemy/mapper"
 require "ptolemy/map_condition"
+require "ptolemy/tools"
 
