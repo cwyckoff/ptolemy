@@ -134,7 +134,7 @@ module Ptolemy
 
         it "should access mapping from namespace" do
           # given
-          namespace = NamespaceMapper.new("my_foo")
+          namespace = NamespaceMapper.new
           namespace.definitions[:another_mapping] = @other_map_definition
           Mapper.namespaces[:foo] = namespace
 

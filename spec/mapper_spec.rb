@@ -34,7 +34,7 @@ EOT
 
       it "should delegate to DefinitionMapper" do
         # expect
-        DefinitionMapper.should_receive(:new).with(:foo)
+        DefinitionMapper.should_receive(:new)
 
         # when
         Mapper.define(:foo) { }
@@ -94,7 +94,7 @@ EOT
           Dir.stub!(:glob).and_return([])
 
           # expect
-          running { Mapper.load_maps }.should raise_error(LoadError, "No maps defined for map directory /foo/bar.  Please save your mapping files to a map directory and let Ptolemy know about it (e.g., Ptolemy::Mapper.map_directory = '/foo/bar')")
+          running { Mapper.load_maps }.should raise_error(LoadError, "No maps defined for map directory /foo/bar.  Save mapping files to a directory and let Ptolemy know about it (e.g., Ptolemy::Mapper.map_directory = '/foo/bar')")
         end
         
       end
@@ -125,7 +125,7 @@ EOT
       
       it "should delegate to NamespaceMapper" do
         # expect
-        NamespaceMapper.should_receive(:new).with(:foo)
+        NamespaceMapper.should_receive(:new)
 
         # when
         Mapper.namespace(:foo) { }
@@ -189,7 +189,7 @@ EOT
           
           it "should raise an error" do 
             # given
-            namespace_mapper = NamespaceMapper.new("foo")
+            namespace_mapper = NamespaceMapper.new
             Mapper.namespaces[:foo] = namespace_mapper
 
             running { Mapper[:foo].translate(:bar, @xml) }.should raise_error(MapperError, "No target mapper exists for key bar")
@@ -239,7 +239,7 @@ EOT
       it "should delegate to MapDefinition object" do
         # given
         map_definition = MapDefinition.new
-        definition_mapper = DefinitionMapper.new(:foo)
+        definition_mapper = DefinitionMapper.new
         definition_mapper.definition = map_definition
         xml = "<foo>bar</foo>"
 
@@ -261,7 +261,7 @@ EOT
       it "should delegate to MapDefinition object" do
         # given
         map_definition = mock("MapDefinition")
-        namespace_mapper = NamespaceMapper.new(:foo)
+        namespace_mapper = NamespaceMapper.new
         namespace_mapper.stub!(:definitions).and_return({:bar => map_definition})
         xml = "<foo>bar</foo>"
 

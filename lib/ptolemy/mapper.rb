@@ -23,7 +23,7 @@ module Ptolemy
     end 
 
     def namespace(namespace, &block)
-      namespaces[namespace.to_sym] ||= NamespaceMapper.new(namespace)
+      namespaces[namespace.to_sym] ||= NamespaceMapper.new
       namespaces[namespace.to_sym].instance_eval(&block)
     end 
 
@@ -55,13 +55,13 @@ module Ptolemy
       def define(key, &block)
         raise MapperError, "A mapping for the key #{key} currently exists." if definitions.keys.include?(key.to_sym)
 
-        definitions[key.to_sym] ||= DefinitionMapper.new(key)
+        definitions[key.to_sym] ||= DefinitionMapper.new
         definitions[key.to_sym].instance_eval(&block)
       end 
 
       def load_maps
         path = File.join(map_directory, "*.rb")
-        raise LoadError, "No maps defined for map directory #{map_directory}.  Please save your mapping files to a map directory and let Ptolemy know about it (e.g., Ptolemy::Mapper.map_directory = '/foo/bar')" unless Dir.glob(path).size > 0
+        raise LoadError, "No maps defined for map directory #{map_directory}.  Save mapping files to a directory and let Ptolemy know about it (e.g., Ptolemy::Mapper.map_directory = '/foo/bar')" unless Dir.glob(path).size > 0
 
         Dir.glob(path).each do |map|
           load_str(File.read(map))
@@ -83,10 +83,6 @@ module Ptolemy
     attr_accessor :definition
     include Definable
 
-    def initialize(name)
-      @name = name.to_s
-    end 
-
     def current_map_definition
       @definition ||= MapDefinition.new
     end
@@ -103,10 +99,6 @@ module Ptolemy
   class NamespaceMapper
     attr_reader :name
     include Definable
-
-    def initialize(name)
-      @name = name.to_s
-    end 
 
     def define(key, &block)
       raise MapperError, "A mapping for the key #{key} currently exists.  Are you sure you want to merge the mapping you are about to do with the existing mapping?" if definitions.keys.include?(key.to_sym)
