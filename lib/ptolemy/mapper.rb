@@ -4,6 +4,12 @@ module Ptolemy
 
   module Definable
 
+    def [](key)
+      raise MapperError, "No namespace exists for key #{key}" unless namespaces.has_key?(key.to_sym)
+
+      namespaces[key.to_sym]
+    end 
+
     def definitions
       @definitions ||= {}
     end
@@ -25,8 +31,16 @@ module Ptolemy
       @namespaces ||= {}
     end
 
-    def reset
-      @definitions, @namespaces = nil, nil
+    def reverse(key, source)
+      raise MapperError, "No target mapper exists for key #{key}" unless definitions.has_key?(key.to_sym)
+      
+      definitions[key.to_sym].reverse(source)
+    end 
+
+    def translate(key, source)
+      raise MapperError, "No target mapper exists for key #{key}" unless definitions.has_key?(key.to_sym)
+
+      definitions[key.to_sym].translate(source)
     end
 
   end 
@@ -38,12 +52,8 @@ module Ptolemy
       attr_reader :current_map_definition_key
       attr_accessor :map_directory
 
-      def [](key)
-        definitions[key.to_sym]
-      end 
-
       def define(key, &block)
-        raise MapperError, "A mapping for the key #{key} currently exists.  Are you sure you want to merge the mapping you are about to do with the existing mapping?" if definitions.keys.include?(key)
+        raise MapperError, "A mapping for the key #{key} currently exists." if definitions.keys.include?(key.to_sym)
 
         definitions[key.to_sym] ||= DefinitionMapper.new(key)
         definitions[key.to_sym].instance_eval(&block)
@@ -62,29 +72,15 @@ module Ptolemy
         instance_eval(str.strip)
       end 
 
-      def reverse(key, source)
-        raise MapperError, "No target mapper exists for key #{key}" unless definitions.has_key?(key)
-        
-        definitions[key].reverse(source)
-      end 
-
-      def translate(key, source)
-        raise MapperError, "No target mapper exists for key #{key}" unless definitions.has_key?(key)
-        
-        definitions[key].translate(source)
-      end
-
-      def translate_namespace(namespace, source)
-        raise MapperError, "No target mapper exists for key #{key}" unless namespaces.has_key?(namespace)
-
-        namespaces[namespace].translate(source)
+      def reset
+        @definitions, @namespaces = nil, nil
       end
 
     end
   end
 
   class DefinitionMapper
-    attr_reader :name
+    attr_accessor :definition
     include Definable
 
     def initialize(name)
@@ -95,6 +91,13 @@ module Ptolemy
       @definition ||= MapDefinition.new
     end
 
+    def reverse(source)
+      @definition.reverse(source)
+    end 
+
+    def translate(source)
+      @definition.translate(source)
+    end 
   end 
 
   class NamespaceMapper
@@ -106,26 +109,14 @@ module Ptolemy
     end 
 
     def define(key, &block)
-#      raise MapperError, "A mapping for the key #{key} currently exists.  Are you sure you want to merge the mapping you are about to do with the existing mapping?" if definitions.keys.include?(key)
+      raise MapperError, "A mapping for the key #{key} currently exists.  Are you sure you want to merge the mapping you are about to do with the existing mapping?" if definitions.keys.include?(key.to_sym)
 
-#      @current_map_definition_key = key.to_sym
+      @current_map_definition_key = key.to_sym
       yield current_map_definition
     end
 
-    def translate(source)
-      if namespaces.size > 0
-        translation = ''
-        namespaces.each do |key, namespace| 
-          translation += namespace.translate(source).to_s
-        end
-        translation
-      else
-        current_map_definition.translate(source)
-      end 
-    end
-
     def current_map_definition
-      @map_definition ||= MapDefinition.new
+      definitions[@current_map_definition_key] ||= MapDefinition.new
     end
 
   end

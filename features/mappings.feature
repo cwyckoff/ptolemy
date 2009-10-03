@@ -69,5 +69,5 @@ Scenario: Mapping with namespaces
 
 Scenario: Mapping with nested namespaces
   Given a nested mapping 'billing' exists within namespace 'sales'
-  When the mapping with namespace 'sales' is translated
+  When the 'sales' mapping with nested namespace 'billing' is translated
   Then the target should be correctly processed

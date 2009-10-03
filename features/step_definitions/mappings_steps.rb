@@ -232,12 +232,13 @@ EOT
 end
 
 Given /^a '(\w+)' mapping exists within namespace '(\w+)'$/ do |definition, namespace|
-  @namespace = namespace
+  @namespace = namespace.to_sym
+  @definition = definition.to_sym
 
   str = <<-EOT
     namespace :#{@namespace} do
 
-      define :#{definition} do
+      define :#{@definition} do
         direction "hash" => "xml"
 
         map "name/first" => "event/first_name"
@@ -252,10 +253,11 @@ end
 
 Given /^a nested mapping '(\w+)' exists within namespace '(\w+)'$/ do |nested_namespace, namespace|
   @namespace = namespace
+  @nested_namespace = nested_namespace
 
   str = <<-EOT
     namespace :#{@namespace} do
-      namespace :#{nested_namespace} do
+      namespace :#{@nested_namespace} do
         define :contact do
           direction "hash" => "xml"
   
@@ -414,12 +416,12 @@ end
 
 When /^the mapping with namespace '(\w+)' is translated$/ do |namespace|
   hash = {:name => {:first => "Chris", :last => "Wyckoff"}}
-  @translation = Ptolemy::Mapper.translate_namespace(namespace.to_sym, hash)
+  @translation = Ptolemy::Mapper[namespace].translate(@definition, hash)
 end
 
 When /^the '(\w+)' mapping with nested namespace '(\w+)' is translated$/ do |namespace, nested_namespace|
   hash = {:name => {:first => "Chris", :last => "Wyckoff"}}
-  @translation = Ptolemy::Mapper.translate_namespace(namespace.to_sym, hash)
+  @translation = Ptolemy::Mapper[namespace.to_sym][nested_namespace.to_sym].translate(:contact, hash)
 end
 
 

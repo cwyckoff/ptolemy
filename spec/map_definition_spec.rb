@@ -119,13 +119,30 @@ module Ptolemy
 
       context "when included mapping is nested" do
 
-        it "should add its own " do
+        it "should duplicate included mapping inside of nested element" do
           # expect
           @dupd_source.path_translator.should_receive(:unshift).with("barf")
           @dupd_target.path_translator.should_receive(:unshift).with("barf")
 
           # when
           @map_definition.include(:another_mapping, {:inside_of => "barf"})
+        end
+        
+      end
+
+      context "when included mapping is namespaced" do
+
+        it "should access mapping from namespace" do
+          # given
+          namespace = NamespaceMapper.new("my_foo")
+          namespace.definitions[:another_mapping] = @other_map_definition
+          Mapper.namespaces[:foo] = namespace
+
+          # expect
+          @other_map_definition.should_receive(:rules)
+
+          # when
+          @map_definition.include "foo::another_mapping"
         end
         
       end

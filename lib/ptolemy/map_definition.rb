@@ -38,7 +38,7 @@ module Ptolemy
 
     def include(map_definition=nil, opts={})
       raise MapDefinitionError, "A mapping definition key is required (e.g., m.include(:another_map))" if map_definition.nil?
-      raise MapDefinitionError, "Mapping definition for #{map_definition} does not exist" unless (other_mapper = Mapper[map_definition.to_sym])
+      raise MapDefinitionError, "Mapping definition for #{map_definition} does not exist" unless (other_mapper = included_mapper(map_definition))
 
       other_mapper.rules.each do |m|
         source = m.source.dup
@@ -61,14 +61,14 @@ module Ptolemy
       self
     end
     
-    def reset
-      @rules, @dir = [], nil
-    end
-
     def prepopulate(target_data)
       source_proxy = SourceProxy.new
       @rules << MapRule.new(source_proxy, MapFactory.target(@dir, {:to => target_data}))
       source_proxy
+    end
+
+    def reset
+      @rules, @dir = [], nil
     end
 
     def to(&block)
@@ -102,6 +102,20 @@ module Ptolemy
       end
       target
     end
+
+    private
+
+    def included_mapper(map_definition)
+      elements = map_definition.to_s.split("::")
+      if(elements.size > 1)
+        definition = elements.pop
+        namespace = nil
+        elements.each { |namespace| namespace = Mapper[namespace]}
+        namespace.definitions[definition.to_sym]
+      else 
+        Mapper.definitions[map_definition.to_sym]
+      end 
+    end 
 
   end
 end

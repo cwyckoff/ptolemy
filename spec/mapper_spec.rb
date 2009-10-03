@@ -55,7 +55,7 @@ EOT
           Mapper.define(:bar) { }
           
           # expect
-          running { Mapper.define(:bar) {} }.should raise_error(MapperError, "A mapping for the key bar currently exists.  Are you sure you want to merge the mapping you are about to do with the existing mapping?")
+          running { Mapper.define(:bar) {} }.should raise_error(MapperError, "A mapping for the key bar currently exists.")
         end
       end
       
@@ -182,13 +182,17 @@ EOT
           namespace_mapper.should_receive(:translate).with(:bar, @xml)
 
           # when
-          Mapper.translate_namespace(:foo, :bar, @xml)
+          Mapper[:foo].translate(:bar, @xml)
         end
 
         describe "when no key exists for target mapper" do 
           
           it "should raise an error" do 
-            running { Mapper.translate_namespace(:foo, :bar, @xml) }.should raise_error(MapperError)
+            # given
+            namespace_mapper = NamespaceMapper.new("foo")
+            Mapper.namespaces[:foo] = namespace_mapper
+
+            running { Mapper[:foo].translate(:bar, @xml) }.should raise_error(MapperError, "No target mapper exists for key bar")
           end
         end
         
@@ -234,9 +238,9 @@ EOT
 
       it "should delegate to MapDefinition object" do
         # given
-        map_definition = mock("MapDefinition")
-        MapDefinition.stub!(:new).and_return(map_definition)
+        map_definition = MapDefinition.new
         definition_mapper = DefinitionMapper.new(:foo)
+        definition_mapper.definition = map_definition
         xml = "<foo>bar</foo>"
 
         # expect
@@ -258,16 +262,16 @@ EOT
         # given
         map_definition = mock("MapDefinition")
         namespace_mapper = NamespaceMapper.new(:foo)
+        namespace_mapper.stub!(:definitions).and_return({:bar => map_definition})
         xml = "<foo>bar</foo>"
-        namespace_mapper.definitions[:foo] = map_definition
 
         # expect
         map_definition.should_receive(:translate).with(xml)
 
         # when
-        namespace_mapper.translate(:foo, xml)
+        namespace_mapper.translate(:bar, xml)
       end
-      
+
     end
 
   end 
