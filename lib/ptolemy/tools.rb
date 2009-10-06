@@ -54,7 +54,15 @@ module Ptolemy
       private
 
       def definition(key)
-        @definition ||= Ptolemy::Mapper.definitions[key.to_sym]
+        elements = key.to_s.split(":")
+        if(elements.size > 1)
+          definition = elements.pop
+          namespace = nil
+          elements.each { |namespace| namespace = Mapper[namespace.to_sym] }
+          namespace.definitions[definition.to_sym]
+        else 
+          Ptolemy::Mapper.definitions[key.to_sym]
+        end 
       end 
 
       def max_source_path_length(definition)

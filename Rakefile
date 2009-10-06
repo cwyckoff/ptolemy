@@ -1,4 +1,5 @@
 require 'rubygems'
+require 'activesupport'
 require 'ptolemy'
  
 Ptolemy::Mapper.map_directory = File.dirname(__FILE__) + "/tmp"
@@ -21,7 +22,7 @@ namespace :mappings do
   
   desc "iterate through a specific map definition and spit out mapping rules"
   task :definition do
-    key = ARGV[1].to_sym
+    key = ARGV[1]
     puts "Map definition for: '#{key.to_s}'\n\n"
     Ptolemy::Mapper.load_maps
     Ptolemy::Tools.list_definition(key) do |length, source, target|
@@ -38,7 +39,7 @@ namespace :mappings do
 
   desc "iterate through a specific map definition and spit out source rules"
   task :sources do
-    key = ARGV[1].to_sym
+    key = ARGV[1]
     puts "Map definition sources: '#{key.to_s}'\n\n"
     Ptolemy::Mapper.load_maps
     Ptolemy::Tools.list_sources(key) do |source|
@@ -46,9 +47,9 @@ namespace :mappings do
     end
   end
 
-  desc "iterate through a specific map definition and spit out target rules"
+  desc "iterate through a specific map definition and spit out target rules\tparam: target key"
   task :targets do
-    key = ARGV[1].to_sym
+    key = ARGV[1]
     puts "Map definition targets: '#{key.to_s}'\n\n"
     Ptolemy::Mapper.load_maps
     Ptolemy::Tools.list_targets(key) do |target|
@@ -58,12 +59,13 @@ namespace :mappings do
 
   desc "translate a single mapping rule for a specific definition"
   task :translate_rule do
-    definition = ARGV[1].to_sym
-    source_path = ARGV[2].to_sym
-    source = {:code => "LMP"}
+    definition = ARGV[1]
+    source_path = ARGV[2]
+    source = (ARGV[3] =~ /^\{/) ? ActiveSupport::JSON.decode(ARGV[3]) : ARGV[3]
     puts "Map translation of rule '#{rule}' for definition '#{definition}'\n\n"
     Ptolemy::Mapper.load_maps
     puts Ptolemy::Tools.translate(definition, source_path, source)
   end
 
 end
+
